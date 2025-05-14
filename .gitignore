@@ -10,3 +10,5 @@ wheels/
 .venv
 
 fastlang_cache/
+.cache/
+database.db

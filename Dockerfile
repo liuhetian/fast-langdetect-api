@@ -7,13 +7,18 @@ WORKDIR /app
 COPY pyproject.toml .
 
 # 创建缓存目录
-RUN mkdir -p /app/cache
+RUN mkdir -p /app/volume/dbs
+RUN mkdir -p /app/volume/logs
+RUN mkdir -p /app/models
+
 
 # 安装依赖
 RUN pip install --no-cache-dir .
 
 # 复制应用代码
-COPY . .
+COPY main.py .
+
+COPY /app/models/fast_langdetect/lid.176.bin /app/models/
 
 # 暴露端口
 EXPOSE 8000
