@@ -11,6 +11,7 @@ from datetime import datetime, date
 from loguru import logger 
 import sys 
 import opencc
+import os
 
 
 logger.remove()
@@ -20,7 +21,7 @@ converter = opencc.OpenCC('t2s.json')
 
 # 配置检测器
 config = LangDetectConfig(
-    cache_dir="/app/models",
+    cache_dir="/models",
     allow_fallback=False  # 启用回退到小模型
 )
 detector = LangDetector(config)
@@ -40,7 +41,7 @@ class ModelType(str, Enum):
 class TextRequest(SQLModel):
     text: str
     model: ModelType = Field(default='fast-langdetect', description="检测模型")
-    fast_langdetect_min_score: float | None = Field(default=None, ge=0.0, le=1.0, description="fast-langdetect最小置信度，低于这个值就会用大模型再检测一次")
+    fast_langdetect_min_score: float | None = Field(default=0.3, ge=0.0, le=1.0, description="fast-langdetect最小置信度，低于这个值就会用大模型再检测一次")
     trans_code: bool = Field(default=True, description="是否转换语言代码")
     use_project: str | None = Field(default=None, description="使用本项目名称", index=True)
     # 增加一个检测，如果model为auto，那么fast_langdetct_min_score不能为None
@@ -74,7 +75,15 @@ class LanguageResult(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     # created_date: date = Field(default_factory=date.today)
 
-engine = create_engine("sqlite:////app/volume/dbs/database.db")
+# 创建/volume/dbs
+
+# 确保数据库目录存在
+db_dir = "/volume/dbs"
+if not os.path.exists(db_dir):
+    os.makedirs(db_dir, exist_ok=True)
+    logger.info(f"创建数据库目录: {db_dir}")
+
+engine = create_engine("sqlite:////volume/dbs/database.db")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -89,7 +98,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="语言检测API",
     description="基于fast_langdetect的语言检测服务",
-    version="0.0.1",
+    version="0.0.5",
     lifespan=lifespan,
 )
 
@@ -199,7 +208,7 @@ async def detect_language(
                 finish_flag = True
             
         if not finish_flag:
-            use_model = 'llm'
+            use_model = os.getenv("LLM_MODEL", "gpt-4o-mini")
             traces.append("使用大模型进行检测")
             async with asyncio.timeout(11):
                 result = await chain_detect.ainvoke(request.text)
@@ -233,7 +242,7 @@ async def detect_language(
             session.commit()
             session.refresh(data)
         rdata.lang_cn = code2lang_dict.get(data.lang_code, "未知语言")  
-        raise ValueError("检测失败")
+        # raise ValueError("检测失败")
         return Response(data=rdata)
 
     except Exception as e:

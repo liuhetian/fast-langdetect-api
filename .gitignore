@@ -12,3 +12,4 @@ wheels/
 fastlang_cache/
 .cache/
 database.db
+*.bin
