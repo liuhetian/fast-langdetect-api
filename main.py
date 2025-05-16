@@ -21,7 +21,7 @@ converter = opencc.OpenCC('t2s.json')
 
 # 配置检测器
 config = LangDetectConfig(
-    cache_dir="/models",
+    cache_dir="models/",
     allow_fallback=False  # 启用回退到小模型
 )
 detector = LangDetector(config)
@@ -78,12 +78,12 @@ class LanguageResult(BaseModel):
 # 创建/volume/dbs
 
 # 确保数据库目录存在
-db_dir = "/volume/dbs"
+db_dir = os.getenv("DB_DIR", "/volume/dbs")
 if not os.path.exists(db_dir):
     os.makedirs(db_dir, exist_ok=True)
     logger.info(f"创建数据库目录: {db_dir}")
 
-engine = create_engine("sqlite:////volume/dbs/database.db")
+engine = create_engine(f"sqlite:///{db_dir}/database.db")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -98,7 +98,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="语言检测API",
     description="基于fast_langdetect的语言检测服务",
-    version="0.0.5",
+    version="0.0.6",
     lifespan=lifespan,
 )
 
@@ -141,21 +141,25 @@ code2code_dict = {
     'en': 'en',
     'fr': 'fr',
     'de': 'de',
-    'pt': 'pt',
-    'po': 'pt',  # 别名
+    # 'pt': 'pt',
+    # 'po': 'pt',  # 别名
+    'pt': 'po',
     'id': 'id',
     'th': 'th',
-    'es': 'es',
-    'sp': 'es',  # 别名
+    # 'es': 'es',
+    # 'sp': 'es',  # 别名
+    'es': 'sp',
     'ru': 'ru',
     'tr': 'tr',
     'vi': 'vi',
     'it': 'it',
     'ar': 'ar',
-    'ja': 'ja',
-    'jp': 'ja',  # 别名
-    'ko': 'ko',
-    'kr': 'ko',  # 别名
+    # 'ja': 'ja',
+    # 'jp': 'ja',  # 别名
+    'ja': 'jp',
+    # 'ko': 'ko',
+    # 'kr': 'ko',  # 别名
+    'ko': 'kr',
     'ms': 'ms',
     'pl': 'pl',
     'nl': 'nl',

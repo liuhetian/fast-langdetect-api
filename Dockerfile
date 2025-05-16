@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir .
 # 复制应用代码
 COPY main.py .
 
-COPY lid.176.bin /models/lid.176.bin
+COPY models/lid.176.bin /models/lid.176.bin
 
 # 暴露端口
 EXPOSE 8000
